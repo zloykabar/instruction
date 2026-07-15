@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер инструкций</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #ecf0f1;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            padding: 20px 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .header h1 span {
+            font-size: 24px;
+        }
+
+        .header .instruction {
+            font-size: 14px;
+            line-height: 1.8;
+            opacity: 0.95;
+            background: rgba(255,255,255,0.1);
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .header .instruction ol {
+            padding-left: 22px;
+        }
+
+        .header .instruction li {
+            margin-bottom: 3px;
+        }
+
+        .main {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            min-height: 400px;
+        }
+
+        .sidebar {
+            width: 180px;
+            flex-shrink: 0;
+            border-right: 2px solid #ecf0f1;
+            padding-right: 20px;
+        }
+
+        .sidebar label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .category-item:hover {
+            background: #f0f3f5;
+        }
+
+        .category-item.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .category-item input[type="radio"] {
+            display: none;
+        }
+
+        .category-item .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #bdc3c7;
+            margin-right: 10px;
+            display: inline-block;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .category-item.active .dot {
+            border-color: white;
+            background: white;
+        }
+
+        .category-item .badge {
+            margin-left: auto;
+            background: #bdc3c7;
+            color: #2c3e50;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .category-item.active .badge {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .btn-add {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #219a52;
+            transform: scale(1.02);
+        }
+
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #e67e22;
+            transform: scale(1.02);
+        }
+
+        .btn-edit:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: scale(1.02);
+        }
+
+        .btn-delete:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .content-header h2 {
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .content-header .count {
+            font-size: 13px;
+            color: #7f8c8d;
+            background: #ecf0f1;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .list-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .list-container::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .list-item {
+            padding: 14px 18px;
+            border-bottom: 1px solid #ecf0f1;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .list-item:hover {
+            background: #f7f9fa;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-item .title {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+
+        .list-item .desc {
+            font-size: 13px;
+            color: #7f8c8d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
+        }
+
+        .list-item .arrow {
+            color: #bdc3c7;
+            font-size: 20px;
+            transition: 0.2s;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .list-item:hover .arrow {
+            color: #3498db;
+            transform: translateX(3px);
+        }
+
+        .list-item.selected {
+            background: #ebf5fb !important;
+            border-left: 3px solid #3498db;
+        }
+
+        .empty-state {
+            padding: 50px 20px;
+            text-align: center;
+            color: #95a5a6;
+            font-size: 14px;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 480px;
+            max-width: 92%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-30px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .modal label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 14px;
+            color: #34495e;
+        }
+
+        .modal input,
+        .modal textarea,
+        .modal select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 4px;
+            transition: 0.2s;
+            font-family: inherit;
+            background: #fafafa;
+        }
+
+        .modal input:focus,
+        .modal textarea:focus,
+        .modal select:focus {
+            border-color: #3498db;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+        .modal textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+            justify-content: flex-end;
+        }
+
+        .modal-actions .btn {
+            width: auto;
+            padding: 10px 28px;
+            margin-bottom: 0;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-save {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #2980b9;
+        }
+
+        .view-modal .modal {
+            width: 550px;
+        }
+
+        .view-modal .modal .view-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .view-modal .modal .view-category {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .view-modal .modal .view-desc {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #34495e;
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            min-height: 60px;
+            white-space: pre-wrap;
+        }
+
+        .view-modal .modal .view-meta {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 12px;
+        }
+
+        .status-bar {
+            background: #ecf0f1;
+            padding: 10px 20px;
+            font-size: 13px;
+            color: #7f8c8d;
+            border-top: 1px solid #ddd;
+        }
+
+        @media (max-width: 700px) {
+            .main {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid #ecf0f1;
+                padding-right: 0;
+                padding-bottom: 15px;
+            }
+
+            .category-item {
+                display: inline-block;
+                padding: 6px 16px;
+                margin: 3px;
+                border-radius: 20px;
+                font-size: 13px;
+            }
+
+            .category-item .badge {
+                display: none;
+            }
+
+            .category-item .dot {
+                display: none;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-top: 12px;
+            }
+
+            .btn-group .btn {
+                width: auto;
+                flex: 1;
+                min-width: 80px;
+                padding: 8px 12px;
+                font-size: 13px;
+                margin-bottom: 0;
+            }
+
+            .header .instruction {
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+
+            .modal {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .view-modal .modal {
+                width: 95%;
+            }
+
+            .list-item .desc {
+                max-width: 150px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            body { padding: 10px; }
+            .header { padding: 15px; }
+            .header h1 { font-size: 18px; }
+            .list-item { padding: 10px 12px; flex-wrap: wrap; }
+            .list-item .desc { max-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1><span>📋</span> Менеджер инструкций</h1>
+        <div class="instruction">
+            <ol>
+                <li>Выберите раздел: <strong>Windows</strong>, <strong>Linux</strong> или <strong>Mac OS</strong></li>
+                <li>Нажмите <strong>«➕ Добавить»</strong> — откроется окно для ввода</li>
+                <li><strong>Кликните</strong> по инструкции — выделится, повторный клик откроет просмотр</li>
+                <li>Для удаления: <strong>выделите</strong> инструкцию и нажмите <strong>«🗑 Удалить»</strong> или клавишу <strong>Delete</strong></li>
+                <li>Для редактирования: <strong>выделите</strong> инструкцию и нажмите <strong>«✏️ Редактировать»</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <label>📂 Выберите раздел:</label>
+
+            <div class="category-item active" data-cat="Windows" onclick="selectCategory('Windows')">
+                <span class="dot"></span>
+                Windows
+                <span class="badge" id="badge-Windows">0</span>
+            </div>
+            <div class="category-item" data-cat="Linux" onclick="selectCategory('Linux')">
+                <span class="dot"></span>
+                Linux
+                <span class="badge" id="badge-Linux">0</span>
+            </div>
+            <div class="category-item" data-cat="Mac OS" onclick="selectCategory('Mac OS')">
+                <span class="dot"></span>
+                Mac OS
+                <span class="badge" id="badge-Mac OS">0</span>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-add" onclick="openAddModal()">➕ Добавить</button>
+                <button class="btn btn-edit" id="edit-btn" onclick="editSelected()" disabled>✏️ Редактировать</button>
+                <button class="btn btn-delete" id="delete-btn" onclick="deleteSelected()" disabled>🗑 Удалить</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="content-header">
+                <h2 id="category-title">📄 Инструкции: Windows</h2>
+                <span class="count" id="items-count">0 записей</span>
+            </div>
+            <div class="list-container" id="list-container">
+                <div class="empty-state">
+                    <span class="icon">📭</span>
+                    Нет инструкций в этом разделе<br>
+                    <small>Нажмите «Добавить» чтобы создать</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">✅ Готов к работе</div>
+</div>
+
+<div class="modal-overlay" id="add-modal" onclick="if(event.target===this) closeAddModal()">
+    <div class="modal">
+        <h3 id="modal-title-header">➕ Новая инструкция</h3>
+
+        <label for="modal-category">📂 Раздел</label>
+        <select id="modal-category">
+            <option value="Windows">Windows</option>
+            <option value="Linux">Linux</option>
+            <option value="Mac OS">Mac OS</option>
+        </select>
+
+        <label for="modal-title">📌 Название</label>
+        <input type="text" id="modal-title" placeholder="Введите название инструкции" maxlength="80">
+
+        <label for="modal-desc">📝 Описание</label>
+        <textarea id="modal-desc" placeholder="Введите описание инструкции"></textarea>
+
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeAddModal()">Отмена</button>
+            <button class="btn btn-save" id="save-btn" onclick="saveInstruction()">💾 Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay view-modal" id="view-modal" onclick="if(event.target===this) closeViewModal()">
+    <div class="modal">
+        <div class="view-category" id="view-category">Windows</div>
+        <div class="view-title" id="view-title">Название инструкции</div>
+        <div class="view-desc" id="view-desc">Описание инструкции</div>
+        <div class="view-meta" id="view-meta">Создано: только что</div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeViewModal()">Закрыть</button>
+            <button class="btn btn-save" onclick="editFromView()" id="view-edit-btn">✏️ Редактировать</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== ДАННЫЕ (ПУСТЫЕ РАЗДЕЛЫ) =====
+    let data = {
+        Windows: [],
+        Linux: [],
+        "Mac OS": []
+    };
+
+    let currentCategory = 'Windows';
+    let selectedItemIndex = null;
+    let viewItemData = null;
+
+    renderList();
+
+    function selectCategory(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.category-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.cat === cat);
+        });
+        selectedItemIndex = null;
+        renderList();
+        updateButtons();
+        setStatus(`Выбран раздел: ${cat}`);
+    }
+
+    function renderList() {
+        const container = document.getElementById('list-container');
+        const items = data[currentCategory] || [];
+        const countEl = document.getElementById('items-count');
+        const titleEl = document.getElementById('category-title');
+
+        titleEl.textContent = `📄 Инструкции: ${currentCategory}`;
+        countEl.textContent = `${items.length} записей`;
+        updateBadges();
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="icon">📭</span>
+                    Нет инструкций в этом разделе<br>
+                    <small>Нажмите «Добавить» чтобы создать</small>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        items.forEach((item, index) => {
+            const isSelected = (index === selectedItemIndex);
+            const shortDesc = item.desc ? item.desc.replace(/\n/g, ' ').substring(0, 60) + (item.desc.length > 60 ? '…' : '') : '';
+            
+            html += `
+                <div class="list-item ${isSelected ? 'selected' : ''}" 
+                     onclick="selectInstruction(${index})">
+                    <div class="info">
+                        <div class="title">${escapeHtml(item.title)}</div>
+                        ${item.desc ? `<div class="desc">${escapeHtml(shortDesc)}</div>` : ''}
+                    </div>
+                    <div style="display:flex;align-items:center;">
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        updateButtons();
+        setStatus(`Раздел «${currentCategory}»: ${items.length} инструкций`);
+    }
+
+    function updateBadges() {
+        for (const cat of ['Windows', 'Linux', 'Mac OS']) {
+            const badge = document.getElementById(`badge-${cat}`);
+            if (badge) {
+                badge.textContent = data[cat] ? data[cat].length : 0;
+            }
+        }
+    }
+
+    function updateButtons() {
+        const editBtn = document.getElementById('edit-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const items = data[currentCategory] || [];
+        const hasSelection = (selectedItemIndex !== null && items[selectedItemIndex]);
+        
+        editBtn.disabled = !hasSelection;
+        deleteBtn.disabled = !hasSelection;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function selectInstruction(index) {
+        const items = data[currentCategory];
+        if (!items || index < 0 || index >= items.length) return;
+
+        if (selectedItemIndex === index) {
+            viewInstruction(index);
+            return;
+        }
+
+        selectedItemIndex = index;
+        renderList();
+        updateButtons();
+        setStatus(`Выбрана инструкция: «${items[index].title}»`);
+    }
+
+    function viewInstruction(index) {
+        const items = data[currentCategory];
+        if (!items || index < 0 || index >= items.length) return;
+
+        const item = items[index];
+        viewItemData = { index, category: currentCategory, ...item };
+
+        document.getElementById('view-category').textContent = '📂 ' + currentCategory;
+        document.getElementById('view-title').textContent = item.title;
+        document.getElementById('view-desc').textContent = item.desc || 'Описание отсутствует';
+        
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('view-meta').textContent = `📅 Просмотр: ${dateStr}  •  Раздел: ${currentCategory}`;
+
+        document.getElementById('view-modal').classList.add('active');
+        setStatus(`Просмотр инструкции: «${item.title}»`);
+    }
+
+    function closeViewModal() {
+        document.getElementById('view-modal').classList.remove('active');
+        viewItemData = null;
+        setStatus('Окно просмотра закрыто');
+    }
+
+    function deleteSelected() {
+        const items = data[currentCategory];
+        if (selectedItemIndex === null || !items[selectedItemIndex]) {
+            alert('Сначала выберите инструкцию для удаления (кликните по ней).');
+            return;
+        }
+
+        const item = items[selectedItemIndex];
+        if (confirm(`Удалить инструкцию «${item.title}»?`)) {
+            const title = item.title;
+            items.splice(selectedItemIndex, 1);
+            selectedItemIndex = null;
+            renderList();
+            updateButtons();
+            setStatus(`🗑 Удалена инструкция: «${title}»`);
+        }
+    }
+
+    function editSelected() {
+        const items = data[currentCategory];
+        if (selectedItemIndex === null || !items[selectedItemIndex]) {
+            alert('Сначала выберите инструкцию для редактирования (кликните по ней).');
+            return;
+        }
+
+        const item = items[selectedItemIndex];
+        openEditModal(selectedItemIndex, currentCategory, item.title, item.desc);
+    }
+
+    function editFromView() {
+        if (!viewItemData) return;
+        closeViewModal();
+        openEditModal(viewItemData.index, viewItemData.category, viewItemData.title, viewItemData.desc);
+    }
+
+    function openEditModal(index, category, title, desc) {
+        document.getElementById('modal-title-header').textContent = '✏️ Редактировать инструкцию';
+        document.getElementById('modal-category').value = category;
+        document.getElementById('modal-title').value = title;
+        document.getElementById('modal-desc').value = desc || '';
+        
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.textContent = '🔄 Обновить';
+        saveBtn.dataset.editIndex = index;
+        saveBtn.dataset.editCategory = category;
+        
+        document.getElementById('add-modal').classList.add('active');
+        document.getElementById('modal-title').focus();
+        setStatus(`Редактирование: «${title}»`);
+    }
+
+    function openAddModal() {
+        document.getElementById('modal-title-header').textContent = '➕ Новая инструкция';
+        document.getElementById('modal-category').value = currentCategory;
+        document.getElementById('modal-title').value = '';
+        document.getElementById('modal-desc').value = '';
+        
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.textContent = '💾 Сохранить';
+        delete saveBtn.dataset.editIndex;
+        delete saveBtn.dataset.editCategory;
+        
+        document.getElementById('add-modal').classList.add('active');
+        document.getElementById('modal-title').focus();
+        setStatus('Открыто окно добавления');
+    }
+
+    function closeAddModal() {
+        document.getElementById('add-modal').classList.remove('active');
+        setStatus('Окно закрыто');
+    }
+
+    function saveInstruction() {
+        const category = document.getElementById('modal-category').value;
+        const title = document.getElementById('modal-title').value.trim();
+        const desc = document.getElementById('modal-desc').value.trim();
+
+        if (!title) {
+            alert('Пожалуйста, введите название инструкции!');
+            document.getElementById('modal-title').focus();
+            return;
+        }
+
+        const saveBtn = document.getElementById('save-btn');
+        const editIndex = saveBtn.dataset.editIndex;
+        const editCategory = saveBtn.dataset.editCategory;
+
+        if (editIndex !== undefined && editCategory !== undefined) {
+            const items = data[editCategory];
+            if (items && items[editIndex]) {
+                items[editIndex] = { title, desc };
+                if (editCategory !== category) {
+                    items.splice(editIndex, 1);
+                    if (!data[category]) data[category] = [];
+                    data[category].push({ title, desc });
+                    if (editCategory === currentCategory) {
+                        selectedItemIndex = null;
+                    }
+                }
+                setStatus(`✅ Обновлена инструкция: «${title}»`);
+            }
+        } else {
+            if (!data[category]) data[category] = [];
+            data[category].push({ title, desc });
+            setStatus(`✅ Добавлена инструкция: «${title}» в раздел ${category}`);
+        }
+
+        saveBtn.textContent = '💾 Сохранить';
+        delete saveBtn.dataset.editIndex;
+        delete saveBtn.dataset.editCategory;
+
+        closeAddModal();
+
+        if (category === currentCategory) {
+            renderList();
+        } else {
+            updateBadges();
+        }
+        updateButtons();
+    }
+
+    function setStatus(text) {
+        document.getElementById('status-bar').textContent = text;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('active')) {
+            if (document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                saveInstruction();
+            }
+        }
+        if (e.key === 'Escape') {
+            if (document.getElementById('add-modal').classList.contains('active')) {
+                closeAddModal();
+            } else if (document.getElementById('view-modal').classList.contains('active')) {
+                closeViewModal();
+            }
+        }
+        if (e.key === 'Delete' && !document.getElementById('add-modal').classList.contains('active') 
+            && !document.getElementById('view-modal').classList.contains('active')) {
+            if (selectedItemIndex !== null) {
+                deleteSelected();
+            }
+        }
+    });
+
+    console.log('✅ Программа загружена!');
+    console.log('📋 Инструкции (пустые):', data);
+</script>
+
+</body>
+</html>
